@@ -6,11 +6,18 @@ const request = require('supertest');
 const {app} = require('./../server');       // require server.js, up one dir from current
 const {Todo} = require('./../models/todo');
 
-// testing lifecycle method
+const todos = [{              // array of objects
+  text: 'First test todo'
+}, {
+  text: 'Second text todo'
+}];
+// testing lifecycle method to manage database objects
 // run some code before every test case, in our case we empty the database
 beforeEach((done) => {            // we only execute a test case after calling done
   Todo.remove({})                 // wipe all todos
-  .then(() => done());            // call done
+  .then(() => {
+    Todo.insertMany(todos);       // mongoose method, insert todos array created above. by returning we allow to chain callbacks
+  }).then(() => done());            // call done
 });
 
 describe('POST /todos', () => {
@@ -35,13 +42,13 @@ describe('POST /todos', () => {
       }
       // only execute if return statement above doesn't
       // to validate database, fetch all todos, make assertion about the returned promise
-      Todo.find()
+      Todo.find({text})           // find only todos that match text above, to ensure resulting length is 1
       .then((todos) => {                  // todos == array
         expect(todos.length).toBe(1);     // we're always wiping database, so only expect one record
         expect(todos[0].text).toBe(text);
         done();
         // catch errors thrown inside of callback
-      }).catch((e) => done(e));
+      }).catch((e) => done(e));       // call done like this because of async call
     }); // end .end
   }); // end it should
   // verify that todo does not get created when we send bad data
@@ -59,9 +66,22 @@ describe('POST /todos', () => {
       }
       Todo.find()
       .then((todos) => {
-        expect(todos.length).toBe(0);
+        expect(todos.length).toBe(2);     // these objects added above
         done();
       }).catch((e) => done(e));
     })
-  }) // end it should
+  }); // end it should
 }); // end describe post todos
+
+// test the GET method
+describe('GET /todos', () => {
+  it('should get all todos', (done) => {
+    request(app)
+    .get('/todos')
+    .expect(200)
+    .expect((res) => {
+      expect(res.body.todos.length).toBe(2);
+    })
+    .end(done);             // don't need to pass function to done here because not doing asynchronously
+  })
+}); // end describe GET /todos
