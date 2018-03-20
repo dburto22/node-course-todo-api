@@ -28,6 +28,17 @@ app.post('/todos', (req, res) => {
   }); // end todo.save()
 }); // end app.post
 
+app.get('/todos', (req, res) => {
+  Todo.find()                   // get all todos
+  .then((todos) => {
+    // happy path
+    // don't send back array, send back object, this allows for future modifications to object array
+    res.send({todos});
+  }, (e) => {
+    res.status(400).send(e);
+  })
+});
+
 app.listen(3000, () => {
   console.log('App started on port 3000');
 });
