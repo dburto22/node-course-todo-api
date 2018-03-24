@@ -1,5 +1,6 @@
 var express = require('express');
 var bodyParser = require('body-parser');
+var {ObjectID} = require('mongodb');
 
 var {mongoose} = require('./db/mongoose.js');
 var {Todo} = require('./models/todo');
@@ -37,6 +38,31 @@ app.get('/todos', (req, res) => {
   }, (e) => {
     res.status(400).send(e);
   })
+});
+
+// GET todos but individual object ID
+// URL parameter, we can pass that ID in via URL, and then the callback will fire
+app.get('/todos/:id', (req, res) => {
+  var id = req.params.id;
+  // validate id using isValid
+    // no: 404, send back empty body
+  if (!ObjectID.isValid(id)) {
+    return res.status(404).send('ID not valid');
+  }
+  // findByID to query the database
+    // happy path - if todo, send back, if no todo, send back 404 and empty body
+    Todo.findById(id)
+      .then((todo) => {
+        // error - send back 400, then send back empty body (not error message)
+        if (!todo) {
+          return res.status(404).send({});
+        }
+        res.status(200).send({todo});       //passing back object gives more flexibility
+      }).catch((e) => {
+        res.status(400).send();
+      });
+
+  // res.send(req.params);
 });
 
 app.listen(3000, () => {
