@@ -1,5 +1,6 @@
 const expect = require('expect');
 const request = require('supertest');
+const {ObjectID} = require('mongodb');
 
 // load in local files
 // server.js provides access to express app
@@ -7,8 +8,11 @@ const {app} = require('./../server');       // require server.js, up one dir fro
 const {Todo} = require('./../models/todo');
 
 const todos = [{              // array of objects
+  // id normally auto generates, but we want manual so we can test for it
+  _id: new ObjectID(),
   text: 'First test todo'
 }, {
+  _id: new ObjectID(),
   text: 'Second text todo'
 }];
 // testing lifecycle method to manage database objects
@@ -85,3 +89,33 @@ describe('GET /todos', () => {
     .end(done);             // don't need to pass function to done here because not doing asynchronously
   })
 }); // end describe GET /todos
+
+describe('GET /todos/:id', () => {
+  it('should return todo doc', (done) => {    // async tests need done specified here
+    request(app)
+    .get(`/todos/${todos[0]._id.toHexString()}`)  // without toHexString this is object
+    // look for http status code
+    .expect(200)
+    .expect((res) => {
+      expect(res.body.todo.text).toBe(todos[0].text);
+    })
+    .end(done);
+  }); // end it should return todo doc
+
+  it('should return 404 if todo not found', (done) => {
+    var falseId = new ObjectID().toHexString();
+
+    request(app)
+    .get(`/todos/${falseId}`)
+    .expect(404)
+    .end(done);
+  }); // end it should return 404 if return not found
+
+  it('should return 404 for non-object ids', (done) => {
+    // pass in bad URL like /todos/123
+    request(app)
+    .get('/todos/123')
+    .expect(404)
+    .end(done);
+  }); // end it should return 404 for non object ids
+}); // end describe get todos :id
