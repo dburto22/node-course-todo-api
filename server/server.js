@@ -7,6 +7,8 @@ var {Todo} = require('./models/todo');
 var {User} = require('./models/user');
 
 var app = express();
+// set environment port variable for use with Heroku. or 3000 if we're running locally
+const port = process.env.PORT || 3000;
 
 // middleware, bodyparser will take json and convert to object, attaching to req
 // return value from bodyParser.json is a function, that's the middleware we need for express
@@ -65,8 +67,13 @@ app.get('/todos/:id', (req, res) => {
   // res.send(req.params);
 });
 
-app.listen(3000, () => {
-  console.log('App started on port 3000');
-});
+// we will listen on Heroku website
+app.listen(port, () => {
+  console.log(`App started on port ${port}`);
+})
+// listen on localhost
+// app.listen(3000, () => {
+//   console.log('App started on port 3000');
+// });
 
 module.exports = {app};       // es6 object syntax
