@@ -79,6 +79,7 @@ app.delete('/todos/:id', (req, res) => {
     if (!todo) {
       return res.status(404).send({});
     }
+    // {todo: todo} is same as {todo}, the todo property of the returned object
     res.status(200).send({todo});
   }).catch((e) => {
     res.status(400).send();
