@@ -1,6 +1,7 @@
-var express = require('express');
-var bodyParser = require('body-parser');
-var {ObjectID} = require('mongodb');
+const _ = require('lodash');
+const express = require('express');
+const bodyParser = require('body-parser');
+const {ObjectID} = require('mongodb');
 
 var {mongoose} = require('./db/mongoose.js');
 var {Todo} = require('./models/todo');
@@ -86,6 +87,49 @@ app.delete('/todos/:id', (req, res) => {
   }); // end findByIdandRemove()
 
 }); // end app.delete
+
+// use patch to update a route
+app.patch('/todos/:id', (req, res) => {
+  var id = req.params.id;
+  // updates are stored in body
+  // don't want users to update completedAt
+  // if the text or completed property exists in req.body, allow for end user updates
+  var body = _.pick(req.body, ['text', 'completed']);
+
+  if (!ObjectID.isValid(id)) {
+    return res.status(404).send('ID not valid');
+  }
+
+  // check the completed value, and set the completed field
+  // if user sets completed to true, we use timestamp for completedAt
+  // if user sets completed to false, we need to clear the timestamp
+  if (_.isBoolean(body.completed) && body.completed) {
+    // set completedAt to timestamp
+    body.completedAt = new Date().getTime();      // timestamps move up from 1970 unix epoch
+  } else {
+    body.completed = false;
+    body.completedAt = null;
+  }
+
+  // query to update the database
+  // similar to findOneAndRemove in mongodb-update.js
+  // second argument is setting values on object
+  // not using key value pairs, have to use mongodb operators
+  // $set operator is set to the 'body' variable
+  // this is all coming from mongoose
+  // third argument are options to tweak how function works
+  // new: true is same as returnOriginal: false in mongodb-update.js
+  Todo.findByIdAndUpdate(id, {$set: body}, {new: true})
+  .then((todo) => {
+    if (!todo){
+      return res.status(404).send();
+    }
+    // happy path, we got a todo back!
+    res.send({todo});
+  }).catch((e) => {
+    res.status(400).send();
+  })
+}); // end app.path
 
 // we will listen on Heroku website
 app.listen(port, () => {
