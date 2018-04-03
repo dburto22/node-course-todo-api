@@ -10,10 +10,14 @@ const {Todo} = require('./../models/todo');
 const todos = [{              // array of objects
   // id normally auto generates, but we want manual so we can test for it
   _id: new ObjectID(),
-  text: 'First test todo'
+  text: 'First test todo',
+  // completed: false,
+  // completedAt: 224
 }, {
   _id: new ObjectID(),
-  text: 'Second text todo'
+  text: 'Second text todo',
+  completed: true,
+  completedAt: 222
 }];
 // testing lifecycle method to manage database objects
 // run some code before every test case, in our case we empty the database
@@ -158,5 +162,50 @@ describe('DELETE /todos/:id', () => {
     .expect(404)
     .end(done);
   });
-
 }); // end describe delete todos/id
+
+describe('PATCH /todos/:id', () => {
+  it('should update the todo', (done) => {
+    // grab id of first item
+    var id = todos[0]._id.toHexString();
+    var text = "I updated the first todo";
+    // make patch request with proper url, update text, set completed to true
+    request(app)
+    .patch(`/todos/${id}`)
+    .send({
+      completed: true,
+      text                    // same as text: text
+    })
+    // assert we get 200 response
+    .expect(200)
+    // custom assertion: text is changed, completed is true, completed at is a number (.toBeA)
+    .expect((res) => {
+      expect(res.body.todo.text).toBe(text);
+      expect(res.body.todo.completed).toBe(true);
+      expect(res.body.todo.completedAt).toBeGreaterThan(1);
+    })
+    .end(done);
+  });
+
+  it('should clear completedAt when todo is not completed', (done) => {
+      // grab id of second item
+      var id = todos[1]._id.toHexString();
+      var text = "Updating the second todo"
+      // update text to something different, set completed to false
+      request(app)
+      .patch(`/todos/${id}`)
+      .send({
+        completed: false,
+        text
+      })
+      // assert 200
+      .expect(200)
+      // text is changed, completed is false, completed At is null(toBeNull)
+      .expect((res) => {
+        expect(res.body.todo.text).toBe(text);
+        expect(res.body.todo.completed).toBe(false);
+        expect(res.body.todo.completedAt).toBeNull();
+      })
+     .end(done);
+  });
+}); // end describe PATCH todos id
