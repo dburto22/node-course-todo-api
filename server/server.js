@@ -1,3 +1,5 @@
+require('./config/config');
+
 const _ = require('lodash');
 const express = require('express');
 const bodyParser = require('body-parser');
@@ -8,8 +10,8 @@ var {Todo} = require('./models/todo');
 var {User} = require('./models/user');
 
 var app = express();
-// set environment port variable for use with Heroku. or 3000 if we're running locally
-const port = process.env.PORT || 3000;
+// set environment port variable for use with Heroku
+const port = process.env.PORT;
 
 // middleware, bodyparser will take json and convert to object, attaching to req
 // return value from bodyParser.json is a function, that's the middleware we need for express
